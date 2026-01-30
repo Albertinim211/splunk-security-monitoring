@@ -1,0 +1,58 @@
+{
+	"visualizations": {
+		"viz_failed_logins": {
+			"type": "splunk.column",
+			"options": {
+				"stackMode": "stacked",
+				"xAxisTitleText": "Time",
+				"yAxisTitleText": "Event Count"
+			},
+			"dataSources": {
+				"primary": "ds_brute_force_query"
+			},
+			"title": "SSH Brute Force Attempts (Failed Logins)"
+		},
+		"viz_system_health": {
+			"type": "splunk.singlevalue",
+			"options": {
+				"majorColor": "> 90 | #D41F1F, > 70 | #D4AF37, default | #008000"
+			},
+			"dataSources": {
+				"primary": "ds_disk_usage"
+			},
+			"title": "Critical Disk Usage Alert"
+		}
+	},
+	"dataSources": {
+		"ds_brute_force_query": {
+			"type": "ds.search",
+			"options": {
+				"query": "index=linux_logs sourcetype=syslog \"Failed password\" | timechart count by src_ip"
+			}
+		},
+		"ds_disk_usage": {
+			"type": "ds.search",
+			"options": {
+				"query": "index=linux_logs \"DISK_USAGE\" | rex \"used: (?<usage>\\d+)%\" | stats latest(usage)"
+			}
+		}
+	},
+	"layout": {
+		"type": "absolute",
+		"options": {
+			"display": "actualSize"
+		},
+		"structure": [
+			{
+				"item": "viz_failed_logins",
+				"position": { "x": 0, "y": 0, "w": 600, "h": 300 }
+			},
+			{
+				"item": "viz_system_health",
+				"position": { "x": 610, "y": 0, "w": 300, "h": 300 }
+			}
+		]
+	},
+	"description": "Enterprise Security Dashboard for Hardened Linux Infrastructure",
+	"title": "Cyber-Sentinel Security Overview"
+}
