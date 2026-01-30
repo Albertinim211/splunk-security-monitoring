@@ -1,0 +1,1 @@
+Note on Dashboard Studio: The provided .json file uses the Splunk Dashboard Studio framework. To view the visualization, import the JSON code into the Source Editor of a new dashboard. It is configured with dynamic thresholds: Green for healthy, Yellow for warning (>70%), and Red for critical (>90%).
