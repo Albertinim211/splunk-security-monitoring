@@ -1,0 +1,37 @@
+# --- Project: Cyber-Sentinel SPL Library ---
+# Purpose: High-fidelity detection logic for Linux environments.
+# Author: [Your Name]
+
+# 1. DETECT SSH BRUTE FORCE ATTACKS
+# Detects any IP that has more than 5 failed login attempts within a 5-minute window.
+index=linux_logs sourcetype=syslog "Failed password" 
+| stats count as failed_attempts, earliest(_time) as first_attempt, latest(_time) as last_attempt by src_ip, user
+| where failed_attempts > 5
+| eval duration_min = round((last_attempt - first_attempt) / 60, 2)
+| table Attacker_IP, User_Targeted, failed_attempts, duration_min
+| sort - failed_attempts
+
+
+# 2. UNAUTHORIZED PRIVILEGE ESCALATION (SUDO)
+# Monitors for any user attempting to use 'sudo' who is NOT on the approved admin list.
+index=linux_logs sourcetype=syslog "sudo" "command not allowed" OR "NOT in sudoers"
+| stats count by host, user, COMMAND
+| rename user as suspicious_user, COMMAND as attempted_command
+| table _time, host, suspicious_user, attempted_command
+
+
+# 3. DISK SPACE CRITICAL ALERT
+# Ingests logs from the 'health_check.sh' script to find partitions over 90% full.
+index=linux_logs "DISK_USAGE" 
+| rex "Partition\s(?<partition>\S+)\sused:\s(?<percentage>\d+)%"
+| where percentage > 90
+| stats latest(percentage) as current_usage by host, partition
+| eval status="CRITICAL"
+
+
+# 4. MONITOR FOR SERVICE CRASHES
+# Detects when critical services (like SSH or Apache) enter a 'failed' state.
+index=linux_logs "systemd" "failed" OR "stopped"
+| stats count by unit, host
+| rename unit as service_name
+| table _time, host, service_name, count
